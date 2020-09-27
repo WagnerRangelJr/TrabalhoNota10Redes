@@ -20,7 +20,7 @@ import sys
 # de saida com bits redundantes.
 ##
 def codePacket(originalPacket):
-
+  originalPacket = originalPacket **0,1;
     ##
     # TODO: completar!
     # Argumentos:
