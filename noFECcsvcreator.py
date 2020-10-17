@@ -1,6 +1,10 @@
 import random
 import math
 import sys
+import csv
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 
 #########
 # Implementacao um esquema sem qualquer metodo de codificao.
@@ -211,3 +215,14 @@ print('Taxa de erro de bits (apos decodificacao): {0:.2f}%\n'.format(
     float(totalBitErrorCount) / float(reps * packetLength * 8) * 100.0))
 print('Numero de pacotes corrompidos: {0:d}'.format(totalPacketErrorCount))
 print('Taxa de erro de pacotes: {0:.2f}%'.format(float(totalPacketErrorCount) / float(reps) * 100.0))
+
+with open('noFECcopy.csv','a',newline='') as f:
+    fieldnames =['Tamanho do pacote','Numero de transmissoes simuladas','Numero de bits transmitidos','Numero de bits errados inseridos','Taxa de erro de bits (antes da decodificacao)','Numero de bits corrompidos apos decodificacao','Taxa de erro de bits (apos decodificacao)','Numero de pacotes corrompidos','Taxa de erro de pacotes']
+    
+    thewriter = csv.DictWriter(f, fieldnames=fieldnames)
+
+    #thewriter.writeheader()  # file doesn't exist yet, write a header
+    thewriter.writerow({'Tamanho do pacote': packetLength ,'Numero de transmissoes simuladas': reps,'Numero de bits transmitidos': (reps * packetLength * 8),'Numero de bits errados inseridos':totalInsertedErrorCount,'Taxa de erro de bits (antes da decodificacao)': '{0:.2f}%'.format(float(totalInsertedErrorCount) / float(reps * len(codedPacket)) * 100.0),'Numero de bits corrompidos apos decodificacao': totalBitErrorCount ,'Taxa de erro de bits (apos decodificacao)':'{0:.2f}%'.format((float(totalBitErrorCount) / float(reps * packetLength * 8) * 100.0)),'Numero de pacotes corrompidos':totalPacketErrorCount,'Taxa de erro de pacotes':'{0:.2f}%'.format((float(totalPacketErrorCount) / float(reps) * 100.0)) }) 
+
+
+        

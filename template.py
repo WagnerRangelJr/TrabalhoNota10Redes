@@ -2,7 +2,6 @@ import random
 import math
 import sys
 
-
 #########
 # Implementacao um esquema sem qualquer metodo de codificao.
 #
@@ -20,64 +19,62 @@ import sys
 # Codifica o pacote de entrada, gerando um pacote
 # de saida com bits redundantes.
 ##
+qtd_linhas = int(input("Digite o número de linhas para a matriz de paridade: "))
+qtd_colunas = int(input("Digite o número de colunas para a matriz de paridade: "))
 
-# Quantidade de linhas e de colunas
-qtd_linhas = int(input("Digite o número de linhas: "))
-qtd_colunas = int(input("Digite o número de colunas: "))
 
 def codePacket(originalPacket):
-    ##
-    # Argumentos:
-    #  - originalPacket: pacote original a ser codificado na forma de uma lista.
-    # Cada entrada na lista representa um bit do pacote (inteiro 0 ou 1).
-    # Valor de retorno: pacote codificado no mesmo formato.
-    ##
 
-    # Tamnho do bloco sem codificação
-    TAM_BLOCO = qtd_linhas * qtd_colunas
+    # Matriz que será usada para calcular as paridades bidimensionais
+    matriz_paridade = [[0 for _ in range(qtd_colunas)] for __ in range(qtd_linhas)]
+    pacote_codificado = []
 
-    # Quantidade de blocos de bits que serão codificados
-    QTD_BLOCOS = len(originalPacket) // TAM_BLOCO
+    # Tamanho do bloco de bits utilizados para o calculo de paridade bidimensional
+    tam_bloco = qtd_linhas * qtd_colunas
+    tam_pacote = len(originalPacket)
 
-    # Tamanho total do bloco codificado = 32bits de dados(8*4) + 8bits paridade linha + 4bits paridade coluna
-    TAM_BLOCO_COD = TAM_BLOCO + qtd_linhas + qtd_colunas
+    # Quantidade de blocos necessários para o calculo de paridade bidimensional
+    qtd_blocos = (tam_pacote // tam_bloco)
+    bits_restantes = 0
+    # Caso o tamanho do pacote não seja um múltiplo do tamanho do bloco,
+    # será necessário um bloco a mais para calcular a paridade de todos os bits
+    if (tam_pacote % tam_bloco != 0) and (tam_pacote > tam_bloco):
+        qtd_blocos = qtd_blocos + 1
 
-    # Tamanho do pacote após codificação, que será o produto da quantidade de blocos de 32bits do pacote original e o
-    # tamanho do bloco após a codificação
-    TAM_PACOTE_COD = QTD_BLOCOS * TAM_BLOCO_COD
+    for bloco in range(qtd_blocos):
 
-    # Geração da matriz de paridade
-    matriz_paridade = [[0 for c in range(qtd_colunas)] for l in range(qtd_linhas)]
-
-    # Vetor que receberá os bits do pacote após a codificação
-    pacote_codificado = [0] * TAM_PACOTE_COD
-
-    # Iteração para a codificação dos blocos de 32 bits
-    for bloco in range(QTD_BLOCOS):
-        # Iteração das n linhas
+        # preencher a matriz de paridade com os bits relativos ao bloco
         for linha in range(qtd_linhas):
-            # Iteração das n colunas de uma linha
             for coluna in range(qtd_colunas):
-                matriz_paridade[linha][coluna] = originalPacket[linha * (qtd_colunas - 1) + linha + coluna]
+                matriz_paridade[linha][coluna] = originalPacket[(bloco * tam_bloco) + linha * qtd_colunas + coluna]
 
-        # Replicação dos dados no pacote codificado
-        for posicao in range(TAM_BLOCO):
-            pacote_codificado[bloco * TAM_BLOCO_COD + posicao] = originalPacket[bloco * TAM_BLOCO + posicao]
+        # preencher o pacote codificado com os bits relativos ao bloco
+        for b in range(tam_bloco):
+            pacote_codificado.append(originalPacket[(bloco * tam_bloco) + b])
 
-        # Cálculo da paridade das colunas
+        # calcular as paridades das colunas e inseri-las no pacote codificado
         for coluna in range(qtd_colunas):
-            paridade_coluna = 0
+            paridade = 0
             for linha in range(qtd_linhas):
-                paridade_coluna = paridade_coluna + matriz_paridade[linha][coluna]
-            pacote_codificado[bloco * TAM_BLOCO_COD + TAM_BLOCO + coluna] = 0 if paridade_coluna % 2 == 0 else 1
+                paridade = paridade + matriz_paridade[linha][coluna]
 
-        # Cálculo da paridade das linhas
+            # Trabalhando com paridade par
+            if paridade % 2 == 0:
+                pacote_codificado.append(0)
+            else:
+                pacote_codificado.append(1)
+
+        # calcular as paridades das linhas e inseri-las no pacote codificado
         for linha in range(qtd_linhas):
-            paridade_linha = 0
+            paridade = 0
             for coluna in range(qtd_colunas):
-                paridade_linha = paridade_linha + matriz_paridade[linha][coluna]
-            pacote_codificado[
-                bloco * TAM_BLOCO_COD + TAM_BLOCO + qtd_colunas + linha] = 0 if paridade_linha % 2 == 0 else 1
+                paridade = paridade + matriz_paridade[linha][coluna]
+
+            # trabalhando com paridade par
+            if paridade % 2 == 0:
+                pacote_codificado.append(0)
+            else:
+                pacote_codificado.append(1)
 
     return pacote_codificado
 
@@ -88,71 +85,69 @@ def codePacket(originalPacket):
 ##
 def decodePacket(transmittedPacket):
 
-    # Tamnho do bloco_cod sem codificação
-    TAM_BLOCO = qtd_linhas * qtd_colunas
-
-    # Quantidade de blocos de 32 bits que serão codificados
-    QTD_BLOCOS = len(originalPacket) // TAM_BLOCO
-
-    # Tamanho total do bloco_cod codificado = 32bits de dados(8*4) + 8bits paridade linha + 4bits paridade coluna
-    TAM_BLOCO_COD = TAM_BLOCO + qtd_linhas + qtd_colunas
-
-    # Tamanho do pacote após codificação, que será o produto da quantidade de blocos de 32bits do pacote original e o
-    # tamanho do bloco_cod após a codificação
-    TAM_PACOTE_COD = QTD_BLOCOS * TAM_BLOCO_COD
-
-    # Geração da matriz de paridade
-    matriz_paridade = [[0 for c in range(qtd_colunas)] for l in range(qtd_linhas)]
-
-    paridade_coluna = [0 for c in range(qtd_colunas)]
-
-    paridade_linha = [0 for c in range(qtd_linhas)]
-
-    # Geração do vetor que armazena os bits decodificados
+    # Matriz que será usada para calcular as paridades bidimensionais
+    matriz_paridade = [[0 for _ in range(qtd_colunas)] for __ in range(qtd_linhas)]
+    paridade_linha = [0 for _ in range(qtd_linhas)]
+    paridade_coluna = [0 for _ in range(qtd_colunas)]
     pacote_decodificado = []
 
-    # Itera por cada bloco_cod codificado
-    for bloco_cod in range(0, TAM_PACOTE_COD, TAM_BLOCO_COD):
+    # Tamanho do bloco
+    tam_bloco = qtd_linhas * qtd_colunas
 
-        # Bits de dados dos blocos são dispostos na matriz
+    # Tamanho do bloco codificado
+    tam_bloco_cod = tam_bloco + (qtd_linhas + qtd_colunas)
+
+    # Tamnho do pacote codificado
+    tam_pacote_cod = len(transmittedPacket)
+
+    for bloco in range(0, tam_pacote_cod, tam_bloco_cod):
+
+        # Preencher a matriz paridade com os bits relativos ao bloco
         for linha in range(qtd_linhas):
             for coluna in range(qtd_colunas):
-                matriz_paridade[linha][coluna] = transmittedPacket[linha * (qtd_colunas - 1) + linha + coluna]
+                matriz_paridade[linha][coluna] = transmittedPacket[bloco + linha * qtd_colunas + coluna]
 
-        # Bits de paridade das colunas
+        # preencher o vetor paridade_coluna
         for coluna in range(qtd_colunas):
-            paridade_coluna[coluna] = transmittedPacket[bloco_cod + TAM_BLOCO + coluna]
+            paridade_coluna[coluna] = transmittedPacket[bloco + tam_bloco + coluna]
 
-        # Bits de paridade das linhas
+        # preencher o vetor paridade_linha
         for linha in range(qtd_linhas):
-            paridade_linha[linha] = transmittedPacket[bloco_cod + TAM_BLOCO + qtd_colunas + linha]
+            paridade_linha[linha] = transmittedPacket[bloco + tam_bloco + qtd_colunas + linha]
 
-        # Verificação das paridades das linhas
-        linha_erro = None
-        for linha in range(qtd_linhas):
-            paridade = 0
-            for coluna in range(qtd_colunas):
-                paridade = paridade + matriz_paridade[linha][coluna]
-            if paridade % 2 != paridade_linha[linha]:
-                linha_erro = linha
-                break
-
-        # Verificação dos bits de paridade das colunas
+        # verificar paridade das colunas
         coluna_erro = None
         for coluna in range(qtd_colunas):
             paridade = 0
             for linha in range(qtd_linhas):
                 paridade = paridade + matriz_paridade[linha][coluna]
-            if paridade % 2 != paridade_coluna[coluna]:
+            paridade = paridade % 2
+            if paridade != paridade_coluna[coluna]:
                 coluna_erro = coluna
                 break
 
-        if (linha_erro is not None) and (coluna_erro is not None):
-            matriz_paridade[linha_erro][coluna_erro] = 1 if matriz_paridade[linha_erro][coluna_erro] == 0 else 1
+        # verificar paridade das linhas
+        linha_erro = None
+        for linha in range(qtd_linhas):
+            paridade = 0
+            for coluna in range(qtd_colunas):
+                paridade = paridade + matriz_paridade[linha][coluna]
+            paridade = paridade % 2
+            if paridade != paridade_linha[linha]:
+                linha_erro = linha
+                break
 
-        for linha in matriz_paridade:
-            for b in linha:
-                pacote_decodificado.append(b)
+        # Correção de erros
+        if (linha_erro is not None) and (coluna_erro is not None):
+            if matriz_paridade[linha_erro][coluna_erro] == 0:
+                matriz_paridade[linha_erro][coluna_erro] = 1
+            else:
+                matriz_paridade[linha_erro][coluna_erro] = 0
+
+        # Preenchimento do pacote decodificado
+        for linha in range(qtd_linhas):
+            for coluna in range(qtd_colunas):
+                pacote_decodificado.append(matriz_paridade[linha][coluna])
 
     return pacote_decodificado
 
@@ -334,3 +329,5 @@ print('Taxa de erro de bits (apos decodificacao): {0:.2f}%\n'.format(
     float(totalBitErrorCount) / float(reps * packetLength * 8) * 100.0))
 print('Numero de pacotes corrompidos: {0:d}'.format(totalPacketErrorCount))
 print('Taxa de erro de pacotes: {0:.2f}%'.format(float(totalPacketErrorCount) / float(reps) * 100.0))
+
+
